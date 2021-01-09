@@ -34,7 +34,7 @@ SERVICE_GET_TEMPERATURE = "get_temperature"
 SERVICE_GET_TEMPERATURE_SCHEMA = vol.Schema(
     {
         vol.Required(CONF_NAME): cv.string,
-        vol.Required(CONF_TIME_STEP): cv.time,
+        vol.Required(CONF_TIME_STEP): cv.positive_float,
     }
 )
 
@@ -43,8 +43,8 @@ SERVICE_SET_PERIOD_SCHEMA = vol.Schema(
     {
         vol.Required(CONF_NAME): cv.string,
         vol.Required(CONF_PERIOD_ID): cv.string,
-        vol.Required(CONF_TIME_START): cv.time,
-        vol.Required(CONF_TIME_STOP): cv.time,
+        vol.Required(CONF_TIME_START): cv.positive_float,
+        vol.Required(CONF_TIME_STOP): cv.positive_float,
         vol.Required(CONF_PERIOD_TEMP): cv.positive_int,
         vol.Required(CONF_DAYS): list(),
     }
