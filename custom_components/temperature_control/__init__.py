@@ -169,13 +169,12 @@ class TemperatureControl(RestoreEntity):
         await super().async_added_to_hass()
         state = await self.async_get_last_state()
         if state:
-
-            self._room_name = state.attributes.get('room_name')
+            self._room_name = state.attributes.get('room_name', self._room_name)
             # restore state
-            self._default_temperature = state.attributes.get('default_temperature')
-            self._temperatures = state.attributes.get('temperatures')
-            self._vacation_period = state.attributes.get('vacation_period')
-            self._periods = state.attributes.get('periods')
+            self._default_temperature = state.attributes.get('default_temperature', self._default_temperature)
+            self._temperatures = state.attributes.get('temperatures', self._temperatures)
+            self._vacation_period = state.attributes.get('vacation_period', self._vacation_period)
+            self._periods = state.attributes.get('periods', self._periods)
 
     @property
     def should_poll(self):
