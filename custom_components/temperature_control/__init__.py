@@ -3,6 +3,7 @@ import asyncio
 import datetime
 import logging
 from typing import List, Optional, Dict, Any
+from json import loads, dumps
 
 import voluptuous as vol
 from homeassistant.const import CONF_NAME
@@ -150,6 +151,19 @@ class TemperatureControl(RestoreEntity):
         def __contains__(self, item):
             return self.start <= item < self.stop
 
+        def to_json(self):
+            return dumps(
+                dict(
+                    start=self.start,
+                    stop=self.stop,
+                    id=self.id,
+                )
+            )
+
+        @classmethod
+        def from_json(cls, json_str: str):
+            return cls(**loads(json_str))
+
     def __init__(self, temperature_control_id: str, room_name: str, default_temperature: int):
         """Initialize a variable."""
         self.entity_id = ENTITY_ID_FORMAT.format(temperature_control_id)
@@ -173,8 +187,14 @@ class TemperatureControl(RestoreEntity):
             # restore state
             self._default_temperature = state.attributes.get('default_temperature', self._default_temperature)
             self._temperatures = state.attributes.get('temperatures', self._temperatures)
-            self._vacation_period = state.attributes.get('vacation_period', self._vacation_period)
-            self._periods = state.attributes.get('periods', self._periods)
+
+            vacation_period = state.attributes.get('vacation_period')
+            if vacation_period is not None:
+                self._vacation_period = self.TemperaturePeriod.from_json(vacation_period)
+
+            periods = state.attributes.get('periods')
+            if periods is not None:
+                self._periods = [self.TemperaturePeriod.from_json(p) for p in periods]
 
     @property
     def should_poll(self):
@@ -195,8 +215,8 @@ class TemperatureControl(RestoreEntity):
             room_name=self.room_name,
             vacation_temperature=self.vacation_temperature,
             default_temperature=self.default_temperature,
-            periods=self.periods,
-            vacation_period=self.vacation_period,
+            periods=[p.to_json() for p in self.periods],
+            vacation_period=self.vacation_period.to_json(),
             temperatures=self.temperatures,
         )
 
