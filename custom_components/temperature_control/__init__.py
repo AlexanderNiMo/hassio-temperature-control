@@ -320,12 +320,12 @@ class TemperatureControl(RestoreEntity):
             self.DEFAULT_ID: self._default_temperature,
             self.VACATION_ID: self._vacation_temperature
         }
-        self.async_update_ha_state()
+        self.schedule_update_ha_state()
 
     def clear_vacation_period(self):
         self._vacation_period = self.TemperaturePeriod(0, 0, self.VACATION_ID)
         self.vacation_temperature = self._default_temperature
-        self.async_update_ha_state()
+        self.schedule_update_ha_state()
 
     def get_mode(self, timestap: float) -> str:
         if self._is_vacation(timestap):
@@ -340,7 +340,7 @@ class TemperatureControl(RestoreEntity):
     def set_vacation_period(self, start, stop, temperature: int):
         self._vacation_period = self.TemperaturePeriod(start, stop, self.VACATION_ID)
         self.vacation_temperature = temperature
-        self.async_update_ha_state()
+        self.schedule_update_ha_state()
 
     def set_period(self,  id: str, start, stop, temperature: int, days: List[int]):
         for day in days:
@@ -348,7 +348,7 @@ class TemperatureControl(RestoreEntity):
                 self._update_period(id, start, stop, temperature, day)
             else:
                 self._add_new_period(id, start, stop, temperature, day)
-        self.async_update_ha_state()
+        self.schedule_update_ha_state()
 
     def _update_period(self, id: str, start, stop, temperature: int, day: int):
         time_start = day_time(start, day)
