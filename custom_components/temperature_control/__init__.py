@@ -30,15 +30,16 @@ CONF_PERIOD_TEMP = 'temperature'
 ATTR_CONTROLLER = 'temperature_control'
 ATTR_DEFAULT_TEMP = "default_temperature"
 
+positive_float = vol.All(vol.Coerce(float), vol.Range(min=0))
+
 SERVICE_GET_TEMPERATURE = "get_temperature"
 SERVICE_GET_TEMPERATURE_SCHEMA = vol.Schema(
     {
         vol.Required(CONF_NAME): cv.string,
-        vol.Required(CONF_TIME_STEP): cv.positive_float,
+        vol.Required(CONF_TIME_STEP): positive_float,
     }
 )
 
-positive_float = vol.All(vol.Coerce(float), vol.Range(min=0))
 SERVICE_SET_PERIOD = "set_period"
 SERVICE_SET_PERIOD_SCHEMA = vol.Schema(
     {
