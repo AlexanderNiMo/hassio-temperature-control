@@ -234,6 +234,7 @@ class TemperatureControl(RestoreEntity):
 
     async def async_added_to_hass(self):
         """Run when entity about to be added."""
+
         await super().async_added_to_hass()
         state = await self.async_get_last_state()
         if state:
