@@ -38,13 +38,14 @@ SERVICE_GET_TEMPERATURE_SCHEMA = vol.Schema(
     }
 )
 
+positive_float = vol.All(vol.Coerce(float), vol.Range(min=0))
 SERVICE_SET_PERIOD = "set_period"
 SERVICE_SET_PERIOD_SCHEMA = vol.Schema(
     {
         vol.Required(CONF_NAME): cv.string,
         vol.Required(CONF_PERIOD_ID): cv.string,
-        vol.Required(CONF_TIME_START): vol.All(vol.Coerce(float), vol.Range(min=0)),
-        vol.Required(CONF_TIME_STOP): vol.All(vol.Coerce(float), vol.Range(min=0)),
+        vol.Required(CONF_TIME_START): positive_float,
+        vol.Required(CONF_TIME_STOP): positive_float,
         vol.Required(CONF_PERIOD_TEMP): cv.positive_int,
         vol.Required(CONF_DAYS): list(),
     }
