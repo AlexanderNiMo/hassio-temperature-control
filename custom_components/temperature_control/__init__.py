@@ -2,7 +2,7 @@
 import asyncio
 import datetime
 import logging
-from typing import List
+from typing import List, Optional, Dict, Any
 
 import voluptuous as vol
 from homeassistant.const import CONF_NAME
@@ -184,6 +184,21 @@ class TemperatureControl(RestoreEntity):
     @property
     def room_name(self):
         return self._room_name
+
+    @property
+    def state(self):
+        return self.room_name
+    
+    @property
+    def state_attributes(self) -> Optional[Dict[str, Any]]:
+        return dict(
+            room_name=self.room_name,
+            vacation_temperature=self.vacation_temperature,
+            default_temperature=self.default_temperature,
+            periods=self.periods,
+            vacation_period=self.vacation_period,
+            temperatures=self.temperatures,
+        )
 
     @property
     def vacation_temperature(self):
