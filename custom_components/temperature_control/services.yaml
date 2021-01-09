@@ -1,0 +1,20 @@
+# Example services.yaml entry
+
+get_mode:
+  # Description of the service
+  description: Update a variables value and/or its attributes.
+  # Different fields that your service accepts
+  fields:
+    # Key of the field
+    name:
+      description: string (required) The name of the variable to update
+
+get_temp:
+  # Description of the service
+  description: Update a variables value and/or its attributes.
+  # Different fields that your service accepts
+  fields:
+    # Key of the field
+    name:
+      description: string (required) The name of the variable to update
+

@@ -1,0 +1,10 @@
+{
+    "domain": "temperature_control",
+    "name": "temperature control",
+    "documentation": "https://github.com/AlexanderNiMo/hassio-temperature-control",
+    "requirements": [],
+    "dependencies": [],
+    "codeowners": [
+        "@AlexanderNiMo"
+    ]
+}
