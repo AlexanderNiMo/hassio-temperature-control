@@ -323,12 +323,12 @@ class TemperatureControl(RestoreEntity):
             self.DEFAULT_ID: self._default_temperature,
             self.VACATION_ID: self._vacation_temperature
         }
-        self.schedule_update_ha_state()
+        self.schedule_update_ha_state(True)
 
     def clear_vacation_period(self):
         self._vacation_period = self.TemperaturePeriod(0, 0, self.VACATION_ID)
         self.vacation_temperature = self._default_temperature
-        self.schedule_update_ha_state()
+        self.schedule_update_ha_state(True)
 
     def get_mode(self, timestap: float) -> str:
         if self._is_vacation(timestap):
@@ -343,16 +343,21 @@ class TemperatureControl(RestoreEntity):
     def set_vacation_period(self, start, stop, temperature: int):
         self._vacation_period = self.TemperaturePeriod(start, stop, self.VACATION_ID)
         self.vacation_temperature = temperature
-        self.schedule_update_ha_state()
+        self.schedule_update_ha_state(True)
 
     def set_period(self,  id: str, start, stop, temperature: int, days: List[int]):
-        _LOGGER.warning('Start updating (in object) period')
+        _LOGGER.warning(f'Start updating (in object) period with '
+                        f'id:{id}'
+                        f'start:{start}'
+                        f'stop:{stop}'
+                        f'temperature:{temperature}'
+                        f'days:{days}')
         for day in days:
             if id in self._temperatures:
                 self._update_period(id, start, stop, temperature, day)
             else:
                 self._add_new_period(id, start, stop, temperature, day)
-        self.schedule_update_ha_state()
+        self.schedule_update_ha_state(True)
 
     def _update_period(self, id: str, start, stop, temperature: int, day: int):
         time_start = day_time(start, day)
