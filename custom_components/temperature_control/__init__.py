@@ -232,7 +232,7 @@ class TemperatureControl(RestoreEntity):
         self._periods: List['TemperaturePeriod'] = []
         self._vacation_period = self.TemperaturePeriod(0, 0, 0)
 
-    def async_added_to_hass(self):
+    async def async_added_to_hass(self):
         """Run when entity about to be added."""
         await super().async_added_to_hass()
         state = await self.async_get_last_state()
