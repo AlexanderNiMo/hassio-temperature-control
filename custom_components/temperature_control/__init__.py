@@ -99,6 +99,7 @@ def set_period(
     temperature,
     days
 ):
+    _LOGGER.warning(f'Start updating (set_period) period on {temperature_control}')
     hass.services.call(
         DOMAIN,
         SERVICE_GET_TEMPERATURE,
@@ -154,11 +155,13 @@ def setup(hass, config):
 
     def set_period_service(call):
         """Handle calls to the set_variable service."""
+
         entity_id = ENTITY_ID_FORMAT.format(call.data.get(CONF_NAME))
         entity = component.get_entity(entity_id)
+        _LOGGER.warning(f'Start updating (set_period_service) period on {entity_id}')
 
         if entity:
-            return entity.set_period(
+            entity.set_period(
                 call.data.get(CONF_PERIOD_ID),
                 call.data.get(CONF_TIME_START),
                 call.data.get(CONF_TIME_STOP),
@@ -343,6 +346,7 @@ class TemperatureControl(RestoreEntity):
         self.schedule_update_ha_state()
 
     def set_period(self,  id: str, start, stop, temperature: int, days: List[int]):
+        _LOGGER.warning('Start updating (in object) period')
         for day in days:
             if id in self._temperatures:
                 self._update_period(id, start, stop, temperature, day)
