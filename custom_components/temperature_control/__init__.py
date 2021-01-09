@@ -346,12 +346,8 @@ class TemperatureControl(RestoreEntity):
         self.schedule_update_ha_state(True)
 
     def set_period(self,  id: str, start, stop, temperature: int, days: List[int]):
-        _LOGGER.warning(f'Start updating (in object) period with '
-                        f'id:{id}'
-                        f'start:{start}'
-                        f'stop:{stop}'
-                        f'temperature:{temperature}'
-                        f'days:{days}')
+        _LOGGER.warning(f'Start updating (in object) period with id:{id} start:{start} stop:{stop}'
+                        f'temperature:{temperature} days:{days}')
         for day in days:
             if id in self._temperatures:
                 self._update_period(id, start, stop, temperature, day)
