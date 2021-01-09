@@ -20,14 +20,33 @@ ENTITY_ID_FORMAT = DOMAIN + ".{}"
 CONF_ROOM_NAME = "room_name"
 CONF_TIME_STEP = "timestap"
 
+CONF_TIME_START = "start"
+CONF_TIME_STOP = "stop"
+CONF_DAYS = "days"
+CONF_PERIOD_ID = 'id'
+CONF_PERIOD_TEMP = 'temperature'
+
+
 ATTR_CONTROLLER = 'temperature_control'
 ATTR_DEFAULT_TEMP = "default_temperature"
 
 SERVICE_GET_TEMPERATURE = "get_temperature"
 SERVICE_GET_TEMPERATURE_SCHEMA = vol.Schema(
     {
-        vol.Required(ATTR_CONTROLLER): cv.string,
+        vol.Required(CONF_NAME): cv.string,
         vol.Required(CONF_TIME_STEP): cv.time,
+    }
+)
+
+SERVICE_SET_PERIOD = "set_period"
+SERVICE_SET_PERIOD_SCHEMA = vol.Schema(
+    {
+        vol.Required(CONF_NAME): cv.string,
+        vol.Required(CONF_PERIOD_ID): cv.string,
+        vol.Required(CONF_TIME_START): cv.time,
+        vol.Required(CONF_TIME_STOP): cv.time,
+        vol.Required(CONF_PERIOD_TEMP): cv.positive_int,
+        vol.Required(CONF_DAYS): cv.List,
     }
 )
 
@@ -68,17 +87,38 @@ def get_temperature(
         },
     )
 
-# get_temperature
-#
+@bind_hass
+def set_period(
+     hass,
+    temperature_control,
+    id,
+    start,
+    stop,
+    temperature,
+    days
+):
+    hass.services.call(
+        DOMAIN,
+        SERVICE_GET_TEMPERATURE,
+        {
+            ATTR_CONTROLLER: temperature_control,
+            CONF_PERIOD_ID: id,
+            CONF_TIME_START: start
+            CONF_TIME_STOP: stop
+            CONF_PERIOD_TEMP: temperature
+            CONF_DAYS: days
+        },
+    )
+
+# get_temperature +
 # clear_periods
 # clear_vacation_period
-# get_mode
-# get_temperature
+# get_mode +
 # set_vacation_period
-# set_period
+# set_period (start, stop, temperature, days: List[int])
 
 
-async def async_setup(hass, config):
+def setup(hass, config):
     """Set up variables."""
     component = EntityComponent(_LOGGER, DOMAIN, hass)
 
@@ -98,35 +138,49 @@ async def async_setup(hass, config):
                 TemperatureControl(variable_id, name, default_temp)
             )
 
-    @asyncio.coroutine
-    def async_get_temperature_service(call):
+    def get_temperature_service(call):
         """Handle calls to the set_variable service."""
         entity_id = ENTITY_ID_FORMAT.format(call.data.get(ATTR_CONTROLLER))
         entity = component.get_entity(entity_id)
 
         if entity:
-            target_variables = [entity]
-            tasks = [
-                variable.async_get_temperature_service(
-                    call.data.get(ATTR_CONTROLLER),
-                    call.data.get(CONF_TIME_STEP),
-                )
-                for variable in target_variables
-            ]
-            if tasks:
-                yield from asyncio.wait(tasks, loop=hass.loop)
-
+            return entity.get_temperature(
+                call.data.get(CONF_TIME_STEP)
+            )
         else:
             _LOGGER.warning("Failed to set unknown variable: %s", entity_id)
 
-    hass.services.async_register(
+    def set_period_service(call):
+        """Handle calls to the set_variable service."""
+        entity_id = ENTITY_ID_FORMAT.format(call.data.get(ATTR_CONTROLLER))
+        entity = component.get_entity(entity_id)
+
+        if entity:
+            return entity.set_period(
+                call.data.get(CONF_PERIOD_ID),
+                call.data.get(CONF_TIME_START),
+                call.data.get(CONF_TIME_STOP),
+                call.data.get(CONF_PERIOD_TEMP),
+                call.data.get(CONF_DAYS),
+            )
+        else:
+            _LOGGER.warning("Failed to set unknown variable: %s", entity_id)
+
+    hass.services.register(
         DOMAIN,
         SERVICE_GET_TEMPERATURE,
-        async_get_temperature_service,
+        get_temperature_service,
         schema=SERVICE_GET_TEMPERATURE_SCHEMA,
     )
 
-    await component.async_add_entities(entities)
+    hass.services.register(
+        DOMAIN,
+        SERVICE_SET_PERIOD,
+        set_period_service,
+        schema=SERVICE_SET_PERIOD_SCHEMA,
+    )
+
+    component.add_entities(entities)
     return True
 
 
@@ -178,7 +232,7 @@ class TemperatureControl(RestoreEntity):
         self._periods: List['TemperaturePeriod'] = []
         self._vacation_period = self.TemperaturePeriod(0, 0, 0)
 
-    async def async_added_to_hass(self):
+    def async_added_to_hass(self):
         """Run when entity about to be added."""
         await super().async_added_to_hass()
         state = await self.async_get_last_state()
@@ -264,38 +318,41 @@ class TemperatureControl(RestoreEntity):
             self.VACATION_ID: self._vacation_temperature
         }
 
-    async def clear_vacation_period(self):
+    def clear_vacation_period(self):
         self._vacation_period = self.TemperaturePeriod(0, 0, self.VACATION_ID)
         self.vacation_temperature = self._default_temperature
 
-    async def get_mode(self, timestap: float) -> str:
+    def get_mode(self, timestap: float) -> str:
         if self._is_vacation(timestap):
             return self.VACATION_ID
-        t_time = day_time(timestap)
+        t_time = day_time(timestap, datetime.datetime.fromtimestamp(timestap).weekday())
         return next(map(lambda x: x.id, filter(lambda x: t_time in x, self._periods)), self.DEFAULT_ID)
 
-    async def get_temperature(self, timestap: float) -> int:
-        mode = await self.get_mode(timestap)
+    def get_temperature(self, timestap: float) -> int:
+        mode = self.get_mode(timestap)
         return self._temperatures[mode]
 
     def set_vacation_period(self, start, stop, temperature: int):
-        self._vacation_period = self.TemperaturePeriod(start, stop, 0)
+        self._vacation_period = self.TemperaturePeriod(start, stop, self.VACATION_ID)
         self.vacation_temperature = temperature
 
-    def set_period(self,  id: str, start, stop, temperature: int):
-        if id in self._temperatures:
-            self._update_period(id, start, stop, temperature)
-        else:
-            self._add_new_period(id, start, stop, temperature)
+    def set_period(self,  id: str, start, stop, temperature: int, days: List[int]):
+        for day in days:
+            if id in self._temperatures:
+                self._update_period(id, start, stop, temperature, day)
+            else:
+                self._add_new_period(id, start, stop, temperature, day)
 
-    def _update_period(self, id: str, start, stop, temperature: int):
-        time_start = day_time(start)
-        time_stop = day_time(stop)
+    def _update_period(self, id: str, start, stop, temperature: int, day: int):
+        time_start = day_time(start, day)
+        time_stop = day_time(stop, day)
 
-        p = next(filter(lambda x: x.id == id, self._periods))
+        full_id = f'{id}_{day}'
+
+        p = next(filter(lambda x: x.id == full_id, self._periods))
         p.start = time_start
         p.stop = time_stop
-        self._temperatures[id] = temperature
+        self._temperatures[full_id] = temperature
         self._periods = sorted(self._periods, key=lambda x: x.start)
         prev = None
         for p in self._periods:
@@ -308,9 +365,11 @@ class TemperatureControl(RestoreEntity):
                 p.start = stop
             prev = p
 
-    def _add_new_period(self,  id: str, start, stop, temperature: int):
-        time_start = day_time(start)
-        time_stop = day_time(stop)
+    def _add_new_period(self,  id: str, start, stop, temperature: int, day: int):
+        time_start = day_time(start, day)
+        time_stop = day_time(stop, day)
+
+        full_id = f'{id}_{day}'
 
         for p in self._periods:
             if time_start in p:
@@ -318,10 +377,11 @@ class TemperatureControl(RestoreEntity):
             if time_stop in p:
                 p.start = time_stop
 
-        self._periods.append(self.TemperaturePeriod(time_start, time_stop, id))
+        self._periods.append(self.TemperaturePeriod(time_start, time_stop, full_id))
         self._periods = sorted(self._periods, key=lambda x: x.start)
-        self._temperatures[id] = temperature
+        self._temperatures[full_id] = temperature
 
 
-def day_time(timestep) -> float:
-    return float(datetime.datetime.fromtimestamp(timestep).strftime('%H%M%S'))
+def day_time(timestep: float, week_day: int) -> float:
+    time = datetime.datetime.fromtimestamp(timestep).strftime('%H%M%S')
+    return float(f'{week_day}{time}')
