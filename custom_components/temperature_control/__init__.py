@@ -103,10 +103,10 @@ def set_period(
         {
             ATTR_CONTROLLER: temperature_control,
             CONF_PERIOD_ID: id,
-            CONF_TIME_START: start
-            CONF_TIME_STOP: stop
-            CONF_PERIOD_TEMP: temperature
-            CONF_DAYS: days
+            CONF_TIME_START: start,
+            CONF_TIME_STOP: stop,
+            CONF_PERIOD_TEMP: temperature,
+            CONF_DAYS: days,
         },
     )
 
