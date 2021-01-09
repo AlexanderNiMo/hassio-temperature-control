@@ -46,7 +46,7 @@ SERVICE_SET_PERIOD_SCHEMA = vol.Schema(
         vol.Required(CONF_TIME_START): cv.time,
         vol.Required(CONF_TIME_STOP): cv.time,
         vol.Required(CONF_PERIOD_TEMP): cv.positive_int,
-        vol.Required(CONF_DAYS): cv.List,
+        vol.Required(CONF_DAYS): list(),
     }
 )
 
