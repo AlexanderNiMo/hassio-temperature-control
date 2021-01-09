@@ -83,7 +83,7 @@ def get_temperature(
         DOMAIN,
         SERVICE_GET_TEMPERATURE,
         {
-            ATTR_CONTROLLER: temperature_control,
+            CONF_NAME: temperature_control,
             CONF_TIME_STEP: timestap,
             ATTR_DEFAULT_TEMP: default_temperature
         },
@@ -103,7 +103,7 @@ def set_period(
         DOMAIN,
         SERVICE_GET_TEMPERATURE,
         {
-            ATTR_CONTROLLER: temperature_control,
+            CONF_NAME: temperature_control,
             CONF_PERIOD_ID: id,
             CONF_TIME_START: start,
             CONF_TIME_STOP: stop,
@@ -154,7 +154,7 @@ def setup(hass, config):
 
     def set_period_service(call):
         """Handle calls to the set_variable service."""
-        entity_id = ENTITY_ID_FORMAT.format(call.data.get(ATTR_CONTROLLER))
+        entity_id = ENTITY_ID_FORMAT.format(call.data.get(CONF_NAME))
         entity = component.get_entity(entity_id)
 
         if entity:
