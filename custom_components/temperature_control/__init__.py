@@ -79,6 +79,7 @@ def get_temperature(
     default_temperature
 ):
     """Set input_boolean to True."""
+    _LOGGER.warning(f'Start get_temperature_control')
     hass.services.call(
         DOMAIN,
         SERVICE_GET_TEMPERATURE,
@@ -123,8 +124,9 @@ def set_period(
 
 def setup(hass, config):
     """Set up variables."""
+    _LOGGER.warning(f'Start setup hassio-temperature-control')
     component = EntityComponent(_LOGGER, DOMAIN, hass)
-
+    
     entities = []
 
     items = config.get(DOMAIN)
@@ -177,6 +179,7 @@ def setup(hass, config):
         get_temperature_service,
         schema=SERVICE_GET_TEMPERATURE_SCHEMA,
     )
+    _LOGGER.warning(f'Setup service get_temperature')
 
     hass.services.register(
         DOMAIN,
@@ -184,6 +187,7 @@ def setup(hass, config):
         set_period_service,
         schema=SERVICE_SET_PERIOD_SCHEMA,
     )
+    _LOGGER.warning(f'Setup service set period')
 
     component.add_entities(entities)
     return True
